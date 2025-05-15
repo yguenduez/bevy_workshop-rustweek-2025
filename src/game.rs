@@ -1,6 +1,6 @@
-use bevy::prelude::*;
-
 use crate::{GameAssets, GameState};
+use bevy::prelude::*;
+use rand::Rng;
 
 pub fn game_plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Game), display_level)
@@ -31,12 +31,16 @@ fn display_level(mut commands: Commands, game_assets: Res<GameAssets>) {
         ),],
     ));
 
+    let mut rng = rand::thread_rng();
     for (x, y) in [(1., 1.), (-1., 1.), (-1., -1.), (1., -1.)] {
         commands.spawn((
             Sprite::from_image(game_assets.asteroid.clone()),
             Transform::from_xyz(300.0 * x, 200.0 * y, 0.0),
             Asteroid,
-            Velocity(Vec2::new(x, y)),
+            Velocity(Vec2::new(
+                rng.gen_range(-10.0..10.0),
+                rng.gen_range(-10.0..10.0),
+            )),
             StateScoped(GameState::Game),
         ));
     }
