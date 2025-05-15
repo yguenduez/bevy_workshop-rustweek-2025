@@ -95,6 +95,8 @@ fn collision(
     player: Query<&Transform, With<Player>>,
     mut next: ResMut<NextState<GameState>>,
     mut gizmos: Gizmos,
+    assets: Res<GameAssets>,
+    mut commands: Commands,
 ) -> Result {
     let player_radius = 40.0;
     let asteroid_radius = 50.0;
@@ -114,6 +116,10 @@ fn collision(
             .translation
             .distance(player_transform.translation);
         if distance < (asteroid_radius + player_radius) {
+            commands.spawn((
+                Transform::from(player_transform.clone()),
+                Sprite::from_image(assets.explosion.clone()),
+            ));
             next.set(GameState::StartMenu)
         }
     }
