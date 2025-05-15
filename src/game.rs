@@ -6,7 +6,7 @@ pub fn game_plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Game), display_level)
         .add_systems(
             Update,
-            (control_player, collision).run_if(in_state(GameState::Game)),
+            (control_player, collision, update_meteors).run_if(in_state(GameState::Game)),
         );
 }
 
@@ -15,6 +15,9 @@ struct Player;
 
 #[derive(Component)]
 struct Asteroid;
+
+#[derive(Component)]
+struct Velocity(Vec2);
 
 fn display_level(mut commands: Commands, game_assets: Res<GameAssets>) {
     commands.spawn((
@@ -33,6 +36,7 @@ fn display_level(mut commands: Commands, game_assets: Res<GameAssets>) {
             Sprite::from_image(game_assets.asteroid.clone()),
             Transform::from_xyz(300.0 * x, 200.0 * y, 0.0),
             Asteroid,
+            Velocity(Vec2::new(x, y)),
             StateScoped(GameState::Game),
         ));
     }
@@ -65,6 +69,18 @@ fn control_player(
         visibility
             .get_mut(children[0])?
             .set_if_neq(Visibility::Hidden);
+    }
+
+    Ok(())
+}
+
+fn update_meteors(
+    time: Res<Time>,
+    mut asteroids: Query<(&mut Transform, &Velocity), With<Asteroid>>,
+) -> Result {
+    let delta = time.delta().as_secs_f32();
+    for (mut asteroid_transform, velocity) in &mut asteroids {
+        asteroid_transform.translation += (velocity.0.xy().extend(0.0) * delta);
     }
 
     Ok(())
