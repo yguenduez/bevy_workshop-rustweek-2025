@@ -1,13 +1,15 @@
 use crate::{GameAssets, GameState};
 use bevy::prelude::*;
 use rand::Rng;
+use std::time::Duration;
 
 pub fn game_plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Game), display_level)
         .add_systems(
             Update,
             (control_player, collision, update_meteors).run_if(in_state(GameState::Game)),
-        );
+        )
+        .add_systems(Update, despawn_entities);
 }
 
 #[derive(Component)]
@@ -15,6 +17,9 @@ struct Player;
 
 #[derive(Component)]
 struct Asteroid;
+
+#[derive(Component)]
+struct DespawnTimer(Timer);
 
 #[derive(Component)]
 struct Velocity(Vec2);
@@ -90,6 +95,27 @@ fn update_meteors(
     Ok(())
 }
 
+fn despawn_entities(
+    time: Res<Time>,
+    mut entities: Query<(Entity, &mut DespawnTimer)>,
+    mut commands: Commands,
+) -> Result {
+    let delta = time.delta().as_secs_f32();
+    let mut ids = Vec::new();
+    for (id, mut timer) in &mut entities {
+        timer.0.tick(Duration::from_secs_f32(delta));
+        if timer.0.just_finished() {
+            ids.push(id);
+        }
+    }
+
+    for id in ids {
+        commands.entity(id).despawn();
+    }
+
+    Ok(())
+}
+
 fn collision(
     asteroids: Query<&Transform, With<Asteroid>>,
     player: Query<&Transform, With<Player>>,
@@ -119,6 +145,7 @@ fn collision(
             commands.spawn((
                 Transform::from(player_transform.clone()),
                 Sprite::from_image(assets.explosion.clone()),
+                DespawnTimer(Timer::from_seconds(1.0, TimerMode::Once)),
             ));
             next.set(GameState::StartMenu)
         }
