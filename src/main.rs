@@ -29,6 +29,7 @@ enum GameState {
     Splash,
     StartMenu,
     Game,
+    GameEnd,
 }
 
 #[derive(Resource)]

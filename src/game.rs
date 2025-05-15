@@ -93,6 +93,7 @@ fn update_meteors(
 fn collision(
     asteroids: Query<&Transform, With<Asteroid>>,
     player: Query<&Transform, With<Player>>,
+    mut next: ResMut<NextState<GameState>>,
     mut gizmos: Gizmos,
 ) -> Result {
     let player_radius = 40.0;
@@ -113,7 +114,7 @@ fn collision(
             .translation
             .distance(player_transform.translation);
         if distance < (asteroid_radius + player_radius) {
-            println!("Collision detected!");
+            next.set(GameState::StartMenu)
         }
     }
 
